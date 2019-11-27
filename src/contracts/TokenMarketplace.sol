@@ -51,6 +51,7 @@ contract TokenMarketplace{
 
     function depositDollars(address _address,uint256 _value) public returns(uint256 newBalance){
         dollars[_address] = _value;
+        require(token.depositTokens(_address,_value) == _value,"Error by depositing tokens");
         return dollars[_address];
     }
 
@@ -68,7 +69,7 @@ contract TokenMarketplace{
         return dollars[_address];
     }
 
-    function sell(uint nTokens, uint _price) public{
+    function sell(uint nTokens, uint _price) public returns(address ownerOffer){
         require(token.getBalance(msg.sender) >= nTokens,"Seller not have enough tokens;");
         require(nTokens > 0,"Error rejected");
         require(_price > 0,"Error rejected");
@@ -79,6 +80,8 @@ contract TokenMarketplace{
         
         emit TokenOrdered(offersIndex,_price,msg.sender,nTokens,false);
         offersIndex++;
+
+        return offers[offersIndex-1].owner;
     }
 
     function buy(uint _id) public{

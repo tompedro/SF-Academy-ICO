@@ -11,8 +11,6 @@ router.post("/sign-in",function(req,res,next){
     interface.createWallet().then(result => {
         res.send(result);
     });
-    
-    
 });
 router.post("/info",function(req,res,next){
     //console.log(JSON.stringify(interface.getInfo(req.body["account"])));
@@ -27,5 +25,20 @@ router.post("/addDollars",function(req,res,next){
         console.log("result => " + result);
         //console.log(JSON.stringify(interface.getInfo(req.body["account"])));
     });
+});
+
+router.post("/getAll",function(req,res,next){
+    interface.getAll().then(result =>{
+        result = JSON.stringify(result);
+        res.send(result);
+    })
+});
+
+router.post("/sell",function(req,res,next){
+    interface.sell(Number(req.body["tokens"]) , Number(req.body["price"]) ,req.body["account"]).then(console.log);
+});
+
+router.post("/buy",function(req,res,next){
+    interface.buy(Number(req.body["id"]),req.body["account"]).then(console.log);
 });
 module.exports = router;

@@ -4,15 +4,19 @@ import './App.css';
 import Web3 from 'web3'
 import Token from '../abis/TokenMarketplace.json'
 import Navbar from './Navbar'
+import Main from './Main'
 import { ESRCH } from 'constants';
 
 class App extends Component{
   constructor(props) {
     super(props);
-    this.state = { apiResponse: "" , account:"", dollars :0, tokens:0 ,inputDollars:0};
+    this.state = { apiResponse: "" , account:"", dollars :0, tokens:0 ,inputDollars:0,offers:[]};
     this.signIn = this.signIn.bind(this)
     this.getInfo = this.getInfo.bind(this)
     this.addDollars = this.addDollars.bind(this)
+    this.sell = this.sell.bind(this)
+    this.getAll = this.getAll.bind(this)
+    this.buy = this.buy.bind(this)
   }
   /*
   async loadWeb3() {
@@ -79,6 +83,36 @@ class App extends Component{
     })
   }
 
+  getAll(){
+    fetch("http://localhost:9000/api/getAll",{
+      method: 'post',
+      headers : {'Content-Type' : 'application/x-www-form-urlencoded'}
+    })
+      .then(res => {
+        res = res.json().then(solve =>{
+          console.log(solve);
+          this.setState({offers : solve});
+        });
+      })
+  }
+
+  sell(tokens,price){
+    console.log("ok")
+    fetch("http://localhost:9000/api/sell",{
+      method: 'post',
+      headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
+      body : "tokens=" + tokens.toString() + "&price=" + price.toString() + "&account=" + this.state.account.toString()
+    })
+  }
+
+  buy(id){
+    fetch("http://localhost:9000/api/buy",{
+      method: 'post',
+      headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
+      body : "id=" + id.toString() + "&account=" + this.state.account.toString()
+    })
+  }
+
   componentDidMount() {
       this.callAPI();
   }/*
@@ -108,10 +142,15 @@ class App extends Component{
                 <p></p>
                 <input className = "input-sm" type = "text" onChange={event => this.setState({inputDollars:event.target.value})}></input>
                 <button className = "btn-success" onClick={this.addDollars}>Add</button>
+                <button className = "btn-success" onClick={this.getAll}>Get</button>
               </div>
             </main>
+            <Main offers = {this.state.offers}
+                  sell = {this.sell}
+                  buy = {this.buy}/>
           </div>
         </div>
+        
       </div>
     );
   }

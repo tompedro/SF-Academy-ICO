@@ -3,8 +3,8 @@ const token = require('../src/abis/TokenMarketplace');
 const Tx = require('ethereumjs-tx').Transaction;
 let url = "http://localhost:7545";
 let account;
-let principalAccount = "0x05734fe68ec8E73C1b3ea730aDe850292F6c6603";
-let privateKeyAccount = "2d889f8a1017df5fa74d6edcbf102244774921913887cc31d4b9356d0aee2f7b";
+let principalAccount = "0x184918504A72938D0d149438a2B00AdD50D146b4";
+let privateKeyAccount = "58fc6c75df7e8b3276fbb0bba066bd4150b44724af14a033a2a8c2aae3e8b644";
 let web3;
 let contract = null;
 let id;
@@ -84,6 +84,40 @@ async function addDollars(_dollars,_account){
     return(newBalance);
 }
 
+async function getAll(){
+    let _contract = await getContract();
+    let l = [];
+    const count = await _contract.methods.offersIndex().call()
+    for (let i = 0; i <= count; i++) {
+        const offer = await _contract.methods.offers(i).call()
+
+        console.log("id=>"+web3.utils.hexToNumber(offer["id"]["_hex"]));
+
+        let newOffer = {"id":i,
+                        "owner":offer["owner"],
+                        "purchased":offer["purchased"],
+                        "price":web3.utils.hexToNumber(offer["price"]["_hex"]),
+                        "tokens":web3.utils.hexToNumber(offer["tokens"]["_hex"])};
+        
+        l.push(newOffer);
+    }
+    console.log(JSON.stringify(l));
+    return(l);
+}
+
+async function sell(_tokens,_price,_account){
+    let _contract = await getContract();
+
+    let address = await _contract.methods.sell(_tokens,_price).send({from : _account,gas : 200000});
+    return(address);
+}
+
+async function buy(_id, _account){
+    let _contract = await getContract();
+
+    let address = await _contract.methods.buy(_id).send({from : _account,gas : 200000});
+    return(address);
+}
 
 const getContract = async() =>{
     if (contract === null) {
@@ -104,5 +138,8 @@ module.exports = {
     createWallet : createWallet,
     getInfo : getInfo,
     addDollars: addDollars,
+    sell:sell,
+    getAll : getAll,
+    buy : buy,
     web3 : web3
 }

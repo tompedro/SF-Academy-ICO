@@ -38,6 +38,11 @@ contract Token{
         balance[owner] = totalAmmount;
     }
 
+    function depositTokens(address _address,uint256 _value) public returns(uint256 newBalance){
+        balance[_address] = _value;
+        return balance[_address];
+    }
+
     function transfer(address _from,address _to,uint256 _ammount) public returns(bool success){
         //require _from have tokens
         require(balance[_from] >= _ammount,"The sender not have enough tokens!");
