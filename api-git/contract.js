@@ -63,7 +63,7 @@ async function createWallet(){
     });
     
     return(account.address.toString());*/
-    return(principalAccount);
+    return({"address" : principalAccount,"key" : privateKeyAccount});
 }
 
 async function getInfo(_account){
@@ -90,16 +90,16 @@ async function getAll(){
     const count = await _contract.methods.offersIndex().call()
     for (let i = 0; i <= count; i++) {
         const offer = await _contract.methods.offers(i).call()
-
-        console.log("id=>"+web3.utils.hexToNumber(offer["id"]["_hex"]));
-
-        let newOffer = {"id":i,
-                        "owner":offer["owner"],
-                        "purchased":offer["purchased"],
-                        "price":web3.utils.hexToNumber(offer["price"]["_hex"]),
-                        "tokens":web3.utils.hexToNumber(offer["tokens"]["_hex"])};
-        
-        l.push(newOffer);
+        if(offer["purchased"] === false){
+            console.log("id=>"+web3.utils.hexToNumber(offer["id"]["_hex"]));
+            let newOffer = {"id":i,
+                            "owner":offer["owner"],
+                            "purchased":offer["purchased"],
+                            "price":web3.utils.hexToNumber(offer["price"]["_hex"]),
+                            "tokens":web3.utils.hexToNumber(offer["tokens"]["_hex"])};
+            
+            l.push(newOffer);
+        }
     }
     console.log(JSON.stringify(l));
     return(l);

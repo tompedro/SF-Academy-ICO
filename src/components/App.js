@@ -1,53 +1,30 @@
 import React, {Component} from 'react';
 import logo from '../logo.svg';
+import logoT from '../logo-t.svg';
 import './App.css';
 import Web3 from 'web3'
 import Token from '../abis/TokenMarketplace.json'
 import Navbar from './Navbar'
-import Main from './Main'
+import Main from './Main';
 import { ESRCH } from 'constants';
 
 class App extends Component{
   constructor(props) {
     super(props);
-    this.state = { apiResponse: "" , account:"", dollars :0, tokens:0 ,inputDollars:0,offers:[]};
+    this.state = { apiResponse: "" , account:"", dollars :0, tokens:0 ,
+                  inputDollars:0,
+                  offers:[],
+                  inputName :"" , inputPassword :"" , inputSurname : "" , inputMail : "",
+                  logName : "", logPassword : ""};
     this.signIn = this.signIn.bind(this)
     this.getInfo = this.getInfo.bind(this)
     this.addDollars = this.addDollars.bind(this)
     this.sell = this.sell.bind(this)
     this.getAll = this.getAll.bind(this)
     this.buy = this.buy.bind(this)
-  }
-  /*
-  async loadWeb3() {
-    if (window.ethereum) {
-      window.web3 = new Web3(window.ethereum)
-      await window.ethereum.enable()
-    }
-    else if (window.web3) {
-      window.web3 = new Web3(window.web3.currentProvider)
-    }
-    else {
-      window.alert('Non-Ethereum browser detected. You should consider trying MetaMask!')
-    }
+    this.logIn = this.logIn.bind(this)
   }
 
-  async loadBlockchainData() {
-    const web3 = window.web3
-    // Load account
-    
-    const accounts = await web3.eth.getAccounts()
-    this.setState({ account: accounts[0] })
-    const networkId = await web3.eth.net.getId()
-    const networkData = Token.networks[networkId]
-    if(networkData) {
-      const t = web3.eth.Contract(Token.abi, networkData.address)
-      console.log(t)
-    } else {
-      window.alert('Token contract not deployed to detected network.')
-    }
-  }
-  */
   callAPI() {
     fetch("http://localhost:9000/api")
         .then(res => res.text())
@@ -56,11 +33,26 @@ class App extends Component{
 
   signIn() {
     if(this.state.account === ""){
-      fetch("http://localhost:9000/api/sign-in",{method: 'post'})
+      fetch("http://localhost:9000/api/sign-in",{
+        method: 'post',
+        headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
+        body : "name=" + this.state.inputName.toString() + "&surname=" + this.state.inputSurname.toString() +"&mail=" + this.state.inputMail.toString() + "&password=" + this.state.inputPassword.toString()
+      })
       .then(res => res.text())
       .then(res => this.setState({ account: res } , () =>{this.getInfo()}))
-    }else{
-      this.getInfo()
+    }
+  }
+
+  logIn(){
+    if(this.state.account === ""){
+      fetch("http://localhost:9000/api/login",{
+        method: 'post',
+        headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
+        body : "&name=" + this.state.logName.toString() +
+                "&password=" + this.state.logPassword.toString()
+      })
+      .then(res => res.text())
+      .then(res => this.setState({ account: res } , () =>{this.getInfo()}))
     }
   }
 
@@ -80,7 +72,7 @@ class App extends Component{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
       body : "dollars=" + this.state.inputDollars.toString() + "&account=" + this.state.account.toString()
-    })
+    }).then(() =>{this.getInfo();})
   }
 
   getAll(){
@@ -124,30 +116,75 @@ class App extends Component{
   render() {
     return (
       <div>
-        <Navbar account={this.state.account} />
+        <Navbar account={this.state.account} tokens={this.state.tokens} dollars={this.state.dollars}/>
         <div className="container-fluid mt-5">
-          <div className="row">
+          <div className = "row" id = "init">
+          <form onSubmit={(event) => {
+            event.preventDefault()
+            this.signIn()
+            }}>
+
+              <label for="uname"><b>Username</b></label>
+              <input className = "form-control" type="text" placeholder="Enter Username" id="uname" onChange={event => this.setState({inputName:event.target.value})}/>
+
+              <label for="surname"><b>Surname</b></label>
+              <input className = "form-control" type="text" placeholder="Enter Surname" id="surname" onChange={event => this.setState({inputSurname:event.target.value})}/>
+
+              <label for="mail"><b>Mail</b></label>
+              <input className = "form-control" type="text" placeholder="Enter Mail" id="mail" onChange={event => this.setState({inputName:event.target.value})}/>
+
+              <label for="psw"><b>Password</b></label>
+              <input className = "form-control" type="password" placeholder="Enter Password" id="psw" onChange={event => this.setState({inputPassword:event.target.value})}/>
+
+              <button type="submit" className="btn btn-primary" >Sign In</button>
+
+            </form>
+
+          <form onSubmit={(event) => {
+            event.preventDefault()
+            this.logIn()
+            }}>
+
+              <label for="uname"><b>Username</b></label>
+              <input className = "form-control" type="text" placeholder="Enter Username" id="uname" onChange={event => this.setState({logName:event.target.value})}/>
+
+              <label for="psw"><b>Password</b></label>
+              <input className = "form-control" type="password" placeholder="Enter Password" id="psw" onChange={event => this.setState({logPassword:event.target.value})}/>
+
+              <button type="submit" className="btn btn-primary" >Log In</button>
+
+            </form>
+          </div>
+          <div className="row" id = "post">
             <main role="main" className="col-lg-12 d-flex text-center">
+
               <div className="content mr-auto ml-auto">
                 <a
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <img src={logo} className="App-logo" alt="logo" />
+                  <img src={logoT} className="App-logo" alt="logo" />
                 </a>
-                <h1>T-Coin ICO</h1>
-                <p>{"Dollars : " + this.state.dollars.toString()}
-                  /{"Tokens : " + this.state.tokens.toString()}</p>
-                <button className = "btn-info" onClick={this.signIn}>SIGN-IN</button>
-                <p></p>
-                <input className = "input-sm" type = "text" onChange={event => this.setState({inputDollars:event.target.value})}></input>
-                <button className = "btn-success" onClick={this.addDollars}>Add</button>
-                <button className = "btn-success" onClick={this.getAll}>Get</button>
+
+                <h1>Marketplace</h1>
+                <div class="container">
+                  <button className = "btn btn-primary" onClick={this.getAll}>Refresh</button>
+                  <div style = {{paddingLeft : "860px"}} class="row">
+                    <div class = "col">
+                      <input className = "form-control" style = {{marginLeft : "-25px",width : "150%"}} type = "text" onChange={event => this.setState({inputDollars:event.target.value})}/>
+                    </div>
+                    <div class = "col">
+                      <button className = "btn btn-primary" onClick={this.addDollars}>Add dollars</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </main>
             <Main offers = {this.state.offers}
                   sell = {this.sell}
-                  buy = {this.buy}/>
+                  buy = {this.buy}
+                  getAll = {this.getAll}
+                  getInfo = {this.getInfo}/>
           </div>
         </div>
         
