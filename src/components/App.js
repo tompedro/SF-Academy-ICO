@@ -11,11 +11,8 @@ class App extends Component{
   constructor(props) {
     super(props);
     this.state = { apiResponse: "" , account:"", dollars :0, tokens:0 ,
-                  inputDollars:0,
                   offers:[],
-                  inputName :"" , inputPassword :"" , inputSurname : "" , inputMail : "",
-                  logName : "", logPassword : "",
-                  init : false, signin : true};
+                  init : true, signin : true};
     this.signIn = this.signIn.bind(this)
     this.getInfo = this.getInfo.bind(this)
     this.addDollars = this.addDollars.bind(this)
@@ -37,23 +34,33 @@ class App extends Component{
       fetch("http://localhost:9000/api/sign-in",{
         method: 'post',
         headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
-        body : "name=" + this.state.inputName.toString() + "&surname=" + this.state.inputSurname.toString() +"&mail=" + this.state.inputMail.toString() + "&password=" + this.state.inputPassword.toString()
+        body : "name=" + this.refs.uname.value + "&surname=" + this.refs.surname.value +"&mail=" + this.refs.mail.value + "&password=" + this.refs.psw.value
       })
       .then(res => res.text())
-      .then(res => this.setState({ account: res } , () =>{this.getInfo()}))
+      .then(res => alert(res))
     }
   }
 
   logIn(){
+    console.log(this.state.inputName);
     if(this.state.account === ""){
       fetch("http://localhost:9000/api/login",{
         method: 'post',
         headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
-        body : "&name=" + this.state.logName.toString() +
-                "&password=" + this.state.logPassword.toString()
+        body : "name=" + this.refs.logName.value +
+                "&password=" + this.refs.logPsw.value
       })
       .then(res => res.text())
-      .then(res => this.setState({ account: res } , () =>{this.getInfo();this.setState({init : false})}))
+      .then((res) => {
+        if(res.includes("0x") === false){
+          alert(res);
+        }else{
+          this.setState({ account: res } , () =>{
+            this.getInfo();
+            this.setState({init : false});
+          });
+        }
+      })
     }
   }
 
@@ -68,12 +75,18 @@ class App extends Component{
   }
   
   addDollars() {
-    console.log(this.state.inputDollars.toString())
     fetch("http://localhost:9000/api/addDollars",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
-      body : "dollars=" + this.state.inputDollars.toString() + "&account=" + this.state.account.toString()
-    }).then(() =>{this.getInfo();})
+      body : "dollars=" + this.refs.dollars.value + "&account=" + this.state.account.toString()
+    }).then(res => res.text())
+    .then((res) =>{
+      if(res !== "success"){
+        alert("OPS SOMETHING GONE WRONG");
+      }else{
+        this.getInfo();
+      }
+    })
   }
 
   getAll(){
@@ -85,6 +98,7 @@ class App extends Component{
         res = res.json().then(solve =>{
           console.log(solve);
           this.setState({offers : solve});
+          this.getInfo();
         });
       })
   }
@@ -99,6 +113,7 @@ class App extends Component{
   }
 
   buy(id){
+    alert("compro");
     fetch("http://localhost:9000/api/buy",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
@@ -124,7 +139,7 @@ class App extends Component{
         <Navbar account={this.state.account} tokens={this.state.tokens} dollars={this.state.dollars}/>
         <div className="container-fluid mt-5">
           {
-            this.state.init ?
+            this.state.init ?(
             <div class ="container">
               <main role="main" className="col-lg-12 text-center">
                 <h1 style = {{paddingTop : "70px"}}>WELCOME</h1>
@@ -141,16 +156,16 @@ class App extends Component{
                     this.signIn()
                     }}>
                       <label for="uname"><b>Username</b></label>
-                      <input style = {{width : "170%"}}className = "form-control" type="text" placeholder="Enter Username" id="uname" onChange={event => this.setState({inputName:event.target.value})}/>
+                      <input style = {{width : "170%"}}className = "form-control" type="text" placeholder="Enter Username" ref="uname"/>
 
                       <label for="surname"><b>Surname</b></label>
-                      <input style = {{width : "170%"}} className= "form-control" type="text" placeholder="Enter Surname" id="surname" onChange={event => this.setState({inputSurname:event.target.value})}/>
+                      <input style = {{width : "170%"}} className= "form-control" type="text" placeholder="Enter Surname" ref="surname"/>
 
                       <label for="mail"><b>Mail</b></label>
-                      <input style = {{width : "170%"}}className = "form-control" type="text" placeholder="Enter Mail" id="mail" onChange={event => this.setState({inputName:event.target.value})}/>
+                      <input style = {{width : "170%"}}className = "form-control" type="text" placeholder="Enter Mail" ref="mail"/>
 
                       <label for="psw"><b>Password</b></label>
-                      <input style = {{width : "170%"}}className = "form-control" type="password" placeholder="Enter Password" id="psw" onChange={event => this.setState({inputPassword:event.target.value})}/>
+                      <input style = {{width : "170%"}}className = "form-control" type="password" placeholder="Enter Password" ref="psw"/>
 
                       <button type="submit" className="btn btn-primary" >Sign In</button>
                   </form>
@@ -160,10 +175,10 @@ class App extends Component{
                     this.logIn()
                     }}>
                       <label for="uname"><b>Username</b></label>
-                      <input style = {{width : "170%"}}className = "form-control" type="text" placeholder="Enter Username" id="uname" onChange={event => this.setState({logName:event.target.value})}/>
+                      <input style = {{width : "170%"}}className = "form-control" type="text" placeholder="Enter Username" ref="logName"/>
 
                       <label for="psw"><b>Password</b></label>
-                      <input style = {{width : "170%"}}className = "form-control" type="password" placeholder="Enter Password" id="psw" onChange={event => this.setState({logPassword:event.target.value})}/>
+                      <input style = {{width : "170%"}}className = "form-control" type="password" placeholder="Enter Password" ref="logPsw"/>
 
                       <button type="submit" className="btn btn-primary" >Log In</button>
 
@@ -171,7 +186,8 @@ class App extends Component{
                 }
               </div>
             </div>
-              : 
+            ):( 
+            this.getInfo &&
             <div className="row" id = "post">
               <main role="main" className="col-lg-12 d-flex text-center">
 
@@ -188,7 +204,7 @@ class App extends Component{
                     <button className = "btn btn-primary" onClick={this.getAll}>Refresh</button>
                     <div style = {{paddingLeft : "860px"}} class="row">
                       <div class = "col">
-                        <input className = "form-control" style = {{marginLeft : "-25px",width : "150%"}} type = "text" onChange={event => this.setState({inputDollars:event.target.value})}/>
+                        <input className = "form-control" placeholder = "Add Dollars"style = {{marginLeft : "-25px",width : "150%"}} type = "text" ref="dollars"/>
                       </div>
                       <div class = "col">
                         <button className = "btn btn-primary" onClick={this.addDollars}>Add dollars</button>
@@ -200,11 +216,10 @@ class App extends Component{
               <Main offers = {this.state.offers}
                     sell = {this.sell}
                     buy = {this.buy}
-                    getAll = {this.getAll}
-                    getInfo = {this.getInfo}/>
-            </div>
+                    account = {this.state.account}/>
+            </div>)
           } 
-          </div>
+        </div>
       </div>
     );
   }

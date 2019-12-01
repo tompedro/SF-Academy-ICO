@@ -7,7 +7,7 @@ contract TokenMarketplace{
     Token public token;
 
     struct TokenMarket{
-        uint id;
+        uint256 id;
         address owner;
         uint price;
         uint256 tokens;
@@ -39,6 +39,12 @@ contract TokenMarketplace{
         bool purchased
     );
 
+    event DollarsDeposit(
+        address account,
+        uint256 dollars,
+        uint256 newBalance
+    );
+
     mapping(address => uint256) public dollars;
     mapping(uint => TokenMarket) public offers;
     uint256 public offersIndex;
@@ -47,12 +53,29 @@ contract TokenMarketplace{
         admin = msg.sender;
         token = _token;
         tokenPrice = _price;
+
+        address inv1 = 0x621d58Ed97F126d5DF7c55f951eaea87e888AFf1;
+        address inv2 = 0x6d53E5134EB72A66970Db0f13e11bb8eFa0aF550;
+        address inv3 = 0x9273f2c9a639DE53E979D2483efA1502335e8551;
+        address[] memory invs;
+        invs[0] = inv1;
+        invs[1] = inv2;
+        invs[2] = inv3;
+
+        uint256[] memory balances;
+        balances[0] = 1000000;
+        balances[1] = 2500000;
+        balances[2] = 10000000;
+
+        require(token.depositTokens(admin,20000000) == 20000000,"Error by depositing tokens");
+        require(token.airdrop(admin,invs,balances),"Error while airdropping");
+        require(token.burn(admin,20000000-(balances[0]+balances[1]+balances[2])),"Error while burning");
     }   
 
-    function depositDollars(address _address,uint256 _value) public returns(uint256 newBalance){
+    function depositDollars(address _address,uint256 _value) public{
         dollars[_address] = _value;
-        require(token.depositTokens(_address,_value) == _value,"Error by depositing tokens");
-        return dollars[_address];
+        
+        emit DollarsDeposit(_address,_value,dollars[_address]);
     }
 
     function transferDollars(address _from,address _to,uint256 _value) public returns(bool success){
@@ -69,7 +92,7 @@ contract TokenMarketplace{
         return dollars[_address];
     }
 
-    function sell(uint nTokens, uint _price) public returns(address ownerOffer){
+    function sell(uint nTokens, uint _price) public{
         require(token.getBalance(msg.sender) >= nTokens,"Seller not have enough tokens;");
         require(nTokens > 0,"Error rejected");
         require(_price > 0,"Error rejected");
@@ -80,8 +103,6 @@ contract TokenMarketplace{
         
         emit TokenOrdered(offersIndex,_price,msg.sender,nTokens,false);
         offersIndex++;
-
-        return offers[offersIndex-1].owner;
     }
 
     function buy(uint _id) public{
@@ -89,15 +110,15 @@ contract TokenMarketplace{
 
         require(_id < offersIndex,"Not exists");
         require(offer.purchased == false,"Purchased yet");
-        require(dollars[msg.sender] >= offer.tokens * offer.price,"Buyer not have enough moneys;");
+        require(dollars[msg.sender] >= offer.price,"Buyer not have enough moneys;");
         require(token.transfer(offer.owner,msg.sender,offer.tokens),"Error");
-        require(transferDollars(msg.sender,offer.owner, offer.tokens * offer.price),"Error");
+        require(transferDollars(msg.sender,offer.owner, offer.price),"Error");
         
         offer.purchased = true;
         offers[_id].purchased = true;
 
         //event
-        emit TokenPurchased(_id,offer.tokens * offer.price,msg.sender,offer.tokens,true);
+        emit TokenPurchased(_id,offer.price,msg.sender,offer.tokens,true);
     }
 
     function getTokensBalance(address _address) public returns(uint256 gotBalance){

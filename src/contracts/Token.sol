@@ -56,16 +56,16 @@ contract Token{
         return true;
     }
 
-    function airdrop(address[] memory _to,uint256[] memory _ammount) public returns(bool success){
+    function airdrop(address _from,address[] memory _to,uint256[] memory _ammount) public returns(bool success){
 
         for(uint256 i = 0; i <= _to.length;i++){
 
-            require(balance[msg.sender] >= _ammount[i],"The sender not have enough tokens!");
+            require(balance[_from] >= _ammount[i],"The sender not have enough tokens!");
 
-            balance[msg.sender] -= _ammount[i];
+            balance[_from] -= _ammount[i];
             balance[_to[i]] += _ammount[i];
 
-            emit Transfer(msg.sender,_to[i],_ammount[i]);
+            emit Transfer(_from,_to[i],_ammount[i]);
         }
         return true;
     }

@@ -46,30 +46,28 @@ class Main extends Component {
           </thead>
           <tbody id="offerList">
             { this.props.offers.map((offer, key) => {
-              return(
-                <tr key={key}>
-                  <th scope="row">{offer.id.toString()}</th>
-                  <td>{offer.tokens}</td>
-                  <td>{offer.price.toString()} Eth</td>
-                  <td>{offer.owner}</td>
-                  <td>
-                    { !offer.purchased
-                      ? <button
-                          name={offer.id}
-                          value={offer.price}
-                          onClick={(event) => {
-                            this.props.buy(event.target.name, event.target.value)
-                            this.props.getAll()
-                            this.props.getInfo()
-                          }}
-                        >
-                          Buy
-                        </button>
-                      : null
-                    }
-                    </td>
-                </tr>
-              )
+                return(
+                  <tr key={key}>
+                    <th scope="row">{offer.id.toString()}</th>
+                    <td>{offer.tokens}</td>
+                    <td>{offer.price.toString()} Eth</td>
+                    <td>{offer.owner}</td>
+                    <td>
+                      { !offer.purchased && offer.owner !== this.props.account
+                        ? <button
+                            name={offer.id}
+                            className = "btn btn-primary"
+                            onClick={(event) => {
+                              this.props.buy(event.target.name)
+                            }}
+                          >
+                            Buy
+                          </button>
+                        : null
+                      }
+                      </td>
+                  </tr>
+                )
             })}
           </tbody>
         </table>
