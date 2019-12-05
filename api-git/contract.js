@@ -1,12 +1,13 @@
 const Web3 = require('web3');
 const token = require('../src/abis/TokenMarketplace');
 const Tx = require('ethereumjs-tx').Transaction;
-let url = "http://localhost:7545";
+let url = "https://ropsten.infura.io/v3/154a9cc2ac1f44ae88737a14e8b84a2c";
 
-let principalAccount = "0xF840C93fDB588799475E798D6947C9bFC45362b0";
-let privateKeyAccount = "07860609F624AFDC6795F18174085A38D84C69E3BABD108226DA8BD16FD4F141";
+let principalAccount = "0x48a49eC7C463A3F747D325D58cDFb08f762Cf350";
+let privateKeyAccount = "3BFEBD120FD629F8E14FF1088D2D9E9CD97AB2B83BEE6277CB4E5E395D270E97";
 let web3;
 let contract = null;
+let contractAddress;
 let id;
 
 
@@ -16,18 +17,24 @@ if (typeof web3 !== 'undefined') {
     web3 = new Web3(new Web3.providers.HttpProvider(url));
 
     console.log("INITIALIZE WEB3....");
-    await sendETH("0x9273f2c9a639DE53E979D2483efA1502335e8551");
+    Initialize().then(()=>{
+        console.log("Finish...");
+    })
+    
+}
+
+async function Initialize(){
+    await sendETH("0x6192c2D89cc95764420b26d36861340Dd143177C");
     await sendETH("0x621d58Ed97F126d5DF7c55f951eaea87e888AFf1");
     await sendETH("0x6d53E5134EB72A66970Db0f13e11bb8eFa0aF550");
-    console.log("Finish...");
 }
 
 async function sendETH(_to){
     try{
-        web3.eth.getBalance(_to).then(res => {
-            if(Number(res) === 0){
-                let gasPrice = 2;
-                let gasLimit = 3000000;
+        web3.eth.getBalance(_to).then(async(res) => {
+            if(Number(res) / 1000000000000000000 < 1){
+                let gasPrice = 20000000000;
+                let gasLimit = 21000;
 
                 console.log("TRANSACTION TO " + _to);
                 
@@ -37,20 +44,20 @@ async function sendETH(_to){
 
                 let rawTransaction  = {
                     "from" : principalAccount,
-                    "gasPrice" : web3.utils.toHex(gasPrice * 1e9),
+                    "gasPrice" : web3.utils.toHex(gasPrice),
                     "nonce": web3.utils.toHex(txCount),
                     "gasLimit" : web3.utils.toHex(gasLimit),
                     "to" : _to,
-                    "value" : "0x3",
-                    "chainId" : id
+                    "value" : "0x1000000000000000"
                 };
 
                 let privKey = Buffer.from(privateKeyAccount,'hex');
-                let tx = new Tx(rawTransaction);
+                let tx = new Tx(rawTransaction,{ chain: 'ropsten'});
 
                 tx.sign(privKey);
                 let serializedTx = tx.serialize();
-
+                
+                
                 web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), function(err,hash){
                     if(!err){
                         console.log("Transaction Succesfully");
@@ -70,6 +77,41 @@ async function sendETH(_to){
     }catch{
         console.log("error... while transaction");
     }
+}
+
+function sendSignedTransaction(account,privateKey,data){
+    console.log("====>>" + privateKey);
+    return new Promise(async(resolve,reject) =>{
+        let txCount = await web3.eth.getTransactionCount(account);
+        let abi = data.encodeABI();
+        console.log(txCount);
+        let gasPrice = 2000000000;
+        let gasLimit = 210000;
+
+        console.log("this is contract address "  + contractAddress)
+
+        let dataTrans = {
+            
+            to: contractAddress,
+            data: abi,
+            nonce: web3.utils.toHex(txCount),
+            gasLimit: web3.utils.toHex(gasLimit),
+            gasPrice: web3.utils.toHex(gasPrice)
+        };
+
+        let tx = new Tx(dataTrans,{ chain: 'ropsten'});
+        tx.sign(new Buffer.from(privateKey,'hex'));
+
+        web3.eth.sendSignedTransaction("0x" + tx.serialize().toString("hex"))
+        .then(out=>{
+            console.log("finish " + out);
+            resolve('success');
+        })
+        .catch(err =>{
+            reject(err);
+        })
+    });
+    
 }
 
 
@@ -97,13 +139,12 @@ async function getInfo(_account){
         "tokens" : Number(tokens)
     });
 }
-async function addDollars(_dollars,_account){
+async function addDollars(_dollars,_account,_key){
     let _contract = await getContract();
     console.log("search => " + _dollars);
-    _contract.methods.depositDollars(_account,_dollars).send({from : _account},function(receipt){
-        return("success");
-    });
-    
+    const m = _contract.methods.depositDollars(_account,_dollars);
+    const result = await sendSignedTransaction(_account,_key,m);
+    return(result);
 }
 
 async function getAll(){
@@ -128,18 +169,16 @@ async function getAll(){
     return(l);
 }
 
-async function sell(_tokens,_price,_account){
+async function sell(_tokens,_price,_account,_key){
     let _contract = await getContract();
-    _contract.methods.sell(_tokens,_price).send({from : _account,gas : 200000}, function(receipt){
-        return("success");
-    });
+    const m = _contract.methods.sell(_tokens,_price);
+    return(sendSignedTransaction(_account,_key,m).then());
 }
 
-async function buy(_id, _account){
+async function buy(_id, _account,_key){
     let _contract = await getContract();
-    _contract.methods.buy(_id).send({from : _account,gas : 200000}).once('receipt',(receipt) =>{
-        return("success");
-    });
+    const m = _contract.methods.buy(_id);
+    return(sendSignedTransaction(_account,_key,m).then());
 }
 
 const getContract = async() =>{
@@ -147,8 +186,10 @@ const getContract = async() =>{
         const abi = token.abi;
         const networkId = await web3.eth.net.getId();
         id = networkId;
+        console.log(id);
         const networkData = token.networks[networkId];
         //console.log(networkData.address);
+        contractAddress = networkData.address;
         let c = new web3.eth.Contract(abi, networkData.address);
         contract = c.clone();
         contract.options.address = networkData.address;

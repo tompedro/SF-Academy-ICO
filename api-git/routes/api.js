@@ -39,28 +39,24 @@ router.post("/login",function(req,res,next){
             res.send(err);
             return;
         } 
-        if(result === null){ 
+        if(result[0] === undefined){ 
             res.send("Nome utente o Password non corretti!");
             return;
         }
-        console.log(result[0].address);
-        res.send(result[0].address);
+        console.log(result[0].address + " " + result[0].primaryKey);
+        res.send(result[0].address + " " + result[0].primaryKey);
     });
 });
 router.post("/info",function(req,res,next){
     //console.log(JSON.stringify(interface.getInfo(req.body["account"])));
-    interface.getInfo(req.body["account"]).then(result =>{
+    interface.getInfo(req.body["address"]).then(result =>{
         //console.log(result["dollars"].toString() + " " + result["tokens"].toString());
         res.send(result["dollars"].toString() + " " + result["tokens"].toString());
     });
 });
 router.post("/addDollars",function(req,res,next){
     //console.log(req.body["account"]);
-    interface.addDollars(Number(req.body["dollars"]),req.body["account"]).then(result =>{
-        console.log("result => " + result);
-        res.send("success");
-        //console.log(JSON.stringify(interface.getInfo(req.body["account"])));
-    });
+    interface.addDollars(Number(req.body["dollars"]),req.body["address"],req.body["key"]).then((result)=>{res.send(result);});
 });
 
 router.post("/getAll",function(req,res,next){
@@ -71,10 +67,14 @@ router.post("/getAll",function(req,res,next){
 });
 
 router.post("/sell",function(req,res,next){
-    interface.sell(Number(req.body["tokens"]) , Number(req.body["price"]) ,req.body["account"]).then(console.log);
+    res.send(interface.sell(Number(req.body["tokens"]) , Number(req.body["price"]) ,req.body["address"],req.body["key"]).then((result)=>{
+        console.log(result);
+    }));
 });
 
 router.post("/buy",function(req,res,next){
-    interface.buy(Number(req.body["id"]),req.body["account"]).then(console.log);
+    res.send(interface.buy(Number(req.body["id"]),req.body["address"],req.body["key"]).then((result)=>{
+        console.log(result);
+    }));
 });
 module.exports = router;

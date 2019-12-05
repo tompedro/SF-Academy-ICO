@@ -53,23 +53,6 @@ contract TokenMarketplace{
         admin = msg.sender;
         token = _token;
         tokenPrice = _price;
-
-        address inv1 = 0x621d58Ed97F126d5DF7c55f951eaea87e888AFf1;
-        address inv2 = 0x6d53E5134EB72A66970Db0f13e11bb8eFa0aF550;
-        address inv3 = 0x9273f2c9a639DE53E979D2483efA1502335e8551;
-        address[] memory invs;
-        invs[0] = inv1;
-        invs[1] = inv2;
-        invs[2] = inv3;
-
-        uint256[] memory balances;
-        balances[0] = 1000000;
-        balances[1] = 2500000;
-        balances[2] = 10000000;
-
-        require(token.depositTokens(admin,20000000) == 20000000,"Error by depositing tokens");
-        require(token.airdrop(admin,invs,balances),"Error while airdropping");
-        require(token.burn(admin,20000000-(balances[0]+balances[1]+balances[2])),"Error while burning");
     }   
 
     function depositDollars(address _address,uint256 _value) public{

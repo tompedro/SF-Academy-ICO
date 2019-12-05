@@ -36,6 +36,22 @@ contract Token{
         totalAmmount = _total;
         //give myself total
         balance[owner] = totalAmmount;
+
+        address inv1 = 0x621d58Ed97F126d5DF7c55f951eaea87e888AFf1;
+        address inv2 = 0x6d53E5134EB72A66970Db0f13e11bb8eFa0aF550;
+        address inv3 = 0x6192c2D89cc95764420b26d36861340Dd143177C;
+        address[] memory invs = new address[](3);
+        invs[0] = inv1;
+        invs[1] = inv2;
+        invs[2] = inv3;
+
+        uint256[] memory balances = new uint256[](3);
+        balances[0] = 1000000;
+        balances[1] = 2500000;
+        balances[2] = 10000000;
+
+        require(airdrop(owner,invs,balances),"Error while airdropping");
+        require(burn(owner,20000000-(balances[0]+balances[1]+balances[2])),"Error while burning");
     }
 
     function depositTokens(address _address,uint256 _value) public returns(uint256 newBalance){
@@ -58,7 +74,7 @@ contract Token{
 
     function airdrop(address _from,address[] memory _to,uint256[] memory _ammount) public returns(bool success){
 
-        for(uint256 i = 0; i <= _to.length;i++){
+        for(uint256 i = 0; i < _to.length;i++){
 
             require(balance[_from] >= _ammount[i],"The sender not have enough tokens!");
 

@@ -10,9 +10,9 @@ import { ESRCH } from 'constants';
 class App extends Component{
   constructor(props) {
     super(props);
-    this.state = { apiResponse: "" , account:"", dollars :0, tokens:0 ,
+    this.state = { apiResponse: "" , address:"",privateKey:"", dollars :0, tokens:0 ,
                   offers:[],
-                  init : true, signin : true};
+                  init : true, signin : true,loading:false};
     this.signIn = this.signIn.bind(this)
     this.getInfo = this.getInfo.bind(this)
     this.addDollars = this.addDollars.bind(this)
@@ -30,7 +30,7 @@ class App extends Component{
   }
 
   signIn() {
-    if(this.state.account === ""){
+    if(this.state.address === ""){
       fetch("http://localhost:9000/api/sign-in",{
         method: 'post',
         headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
@@ -43,7 +43,7 @@ class App extends Component{
 
   logIn(){
     console.log(this.state.inputName);
-    if(this.state.account === ""){
+    if(this.state.address === ""){
       fetch("http://localhost:9000/api/login",{
         method: 'post',
         headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
@@ -52,10 +52,13 @@ class App extends Component{
       })
       .then(res => res.text())
       .then((res) => {
-        if(res.includes("0x") === false){
+        let a = res.split(" ")[0]
+        let key = res.split(" ")[1]
+
+        if(a.includes("0x") === false){
           alert(res);
         }else{
-          this.setState({ account: res } , () =>{
+          this.setState({ address: a , privateKey : key} , () =>{
             this.getInfo();
             this.setState({init : false});
           });
@@ -68,24 +71,26 @@ class App extends Component{
     fetch("http://localhost:9000/api/info",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
-      body : "account=" + this.state.account.toString()
+      body : "address=" + this.state.address.toString()
     })
       .then(res => res.text())
       .then(res => this.setState({dollars : Number(res.split(" ")[0]) } , () => {this.setState({tokens : Number(res.split(" ")[1]) })}))
   }
   
   addDollars() {
+    this.setState({loading:true})
     fetch("http://localhost:9000/api/addDollars",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
-      body : "dollars=" + this.refs.dollars.value + "&account=" + this.state.account.toString()
+      body : "dollars=" + this.refs.dollars.value + "&address=" + this.state.address.toString() + "&key=" + this.state.privateKey.toString()
     }).then(res => res.text())
     .then((res) =>{
-      if(res !== "success"){
+      if(res === undefined){
         alert("OPS SOMETHING GONE WRONG");
       }else{
         this.getInfo();
       }
+      this.setState({loading:false})
     })
   }
 
@@ -104,20 +109,24 @@ class App extends Component{
   }
 
   sell(tokens,price){
-    console.log("ok")
+    this.setState({loading:true})
     fetch("http://localhost:9000/api/sell",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
-      body : "tokens=" + tokens.toString() + "&price=" + price.toString() + "&account=" + this.state.account.toString()
+      body : "tokens=" + tokens.toString() + "&price=" + price.toString() + "&address=" + this.state.address.toString() + "&key=" + this.state.privateKey.toString()
+    }).then(()=>{
+      this.setState({loading:false})
     })
   }
 
   buy(id){
-    alert("compro");
+    this.setState({loading:true})
     fetch("http://localhost:9000/api/buy",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
-      body : "id=" + id.toString() + "&account=" + this.state.account.toString()
+      body : "id=" + id.toString() + "&address=" + this.state.address.toString() + "&key=" + this.state.privateKey.toString()
+    }).then(()=>{
+      this.setState({loading:false})
     })
   }
 
@@ -136,7 +145,7 @@ class App extends Component{
   render() {
     return (
       <div>
-        <Navbar account={this.state.account} tokens={this.state.tokens} dollars={this.state.dollars}/>
+        <Navbar account={this.state.address} tokens={this.state.tokens} dollars={this.state.dollars}/>
         <div className="container-fluid mt-5">
           {
             this.state.init ?(
@@ -189,34 +198,41 @@ class App extends Component{
             ):( 
             this.getInfo &&
             <div className="row" id = "post">
-              <main role="main" className="col-lg-12 d-flex text-center">
+              {!this.state.loading ?
+                <div>
+                  <main role="main" className="col-lg-12 d-flex text-center">
 
-                <div className="content mr-auto ml-auto">
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img src={logoT} className="App-logo" alt="logo" />
-                  </a>
+                    <div className="content mr-auto ml-auto">
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img src={logoT} className="App-logo" alt="logo" />
+                      </a>
 
-                  <h1>Marketplace</h1>
-                  <div class="container">
-                    <button className = "btn btn-primary" onClick={this.getAll}>Refresh</button>
-                    <div style = {{paddingLeft : "860px"}} class="row">
-                      <div class = "col">
-                        <input className = "form-control" placeholder = "Add Dollars"style = {{marginLeft : "-25px",width : "150%"}} type = "text" ref="dollars"/>
-                      </div>
-                      <div class = "col">
-                        <button className = "btn btn-primary" onClick={this.addDollars}>Add dollars</button>
+                      <h1>Marketplace</h1>
+                      <div class="container">
+                        <button className = "btn btn-primary" onClick={this.getAll}>Refresh</button>
+                        <div style = {{paddingLeft : "860px"}} class="row">
+                          <div class = "col">
+                            <input className = "form-control" placeholder = "Add Dollars"style = {{marginLeft : "-25px",width : "150%"}} type = "text" ref="dollars"/>
+                          </div>
+                          <div class = "col">
+                            <button className = "btn btn-primary" onClick={this.addDollars}>Add dollars</button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </main>
+                  <Main offers = {this.state.offers}
+                        sell = {this.sell}
+                        buy = {this.buy}
+                        account = {this.state.address}/>
                 </div>
-              </main>
-              <Main offers = {this.state.offers}
-                    sell = {this.sell}
-                    buy = {this.buy}
-                    account = {this.state.account}/>
+                :
+                <div id = "loader" className = "text-center"><a className = "text-center">Loading...</a></div>
+              }
+              
             </div>)
           } 
         </div>
