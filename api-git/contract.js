@@ -1,29 +1,26 @@
+//import packages
 const Web3 = require('web3');
 const token = require('../src/abis/TokenMarketplace');
 const Tx = require('ethereumjs-tx').Transaction;
 let url = "https://ropsten.infura.io/v3/154a9cc2ac1f44ae88737a14e8b84a2c";
-
+//define global variables
 let principalAccount = "0x48a49eC7C463A3F747D325D58cDFb08f762Cf350";
 let privateKeyAccount = "3BFEBD120FD629F8E14FF1088D2D9E9CD97AB2B83BEE6277CB4E5E395D270E97";
-let web3;
-let contract = null;
+let web3;//web3 instance
+let contract = null;//contract instance
 let contractAddress;
 let id;
 
-
+//initialize web3
 if (typeof web3 !== 'undefined') {
     web3 = new Web3(web3.currentProvider);
 } else {
     web3 = new Web3(new Web3.providers.HttpProvider(url));
-
-    console.log("INITIALIZE WEB3....");
-    Initialize().then(()=>{
-        console.log("Finish...");
-    })
-    
+    Initialize();
 }
 
 async function Initialize(){
+    //send eth to investors for interact with contract
     await sendETH("0x6192c2D89cc95764420b26d36861340Dd143177C");
     await sendETH("0x621d58Ed97F126d5DF7c55f951eaea87e888AFf1");
     await sendETH("0x6d53E5134EB72A66970Db0f13e11bb8eFa0aF550");
@@ -32,12 +29,9 @@ async function Initialize(){
 async function sendETH(_to){
     try{
         web3.eth.getBalance(_to).then(async(res) => {
-            if(Number(res) / 1000000000000000000 < 1){
+            if(Number(res) / 1000000000000000000 < 1){ //check if have less than 1 eth
                 let gasPrice = 20000000000;
-                let gasLimit = 21000;
-
-                console.log("TRANSACTION TO " + _to);
-                
+                let gasLimit = 21000;         
                 
                 id = await web3.eth.net.getId();
                 let txCount = await web3.eth.getTransactionCount(principalAccount);
@@ -57,41 +51,25 @@ async function sendETH(_to){
                 tx.sign(privKey);
                 let serializedTx = tx.serialize();
                 
-                
                 web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), function(err,hash){
-                    if(!err){
-                        console.log("Transaction Succesfully");
-                        web3.eth.getBalance(_to).then(res => {
-                            console.log(res);
-                            
-                        });
-                        
-                    }else{
-                        console.log("ERROR =>> " + err);
-                    }
+                    if(err) throw err;
                 });
-            }else{
-                console.log("THIS ADDRESS HAVE ALREADY " + res.toString() + " ETH");
-            }   
+            } 
         });
     }catch{
         console.log("error... while transaction");
     }
 }
-
+//interact with contract
 function sendSignedTransaction(account,privateKey,data){
-    console.log("====>>" + privateKey);
     return new Promise(async(resolve,reject) =>{
         let txCount = await web3.eth.getTransactionCount(account);
         let abi = data.encodeABI();
-        console.log(txCount);
-        let gasPrice = 2000000000;
+
+        let gasPrice = 20000000000;
         let gasLimit = 210000;
 
-        console.log("this is contract address "  + contractAddress)
-
         let dataTrans = {
-            
             to: contractAddress,
             data: abi,
             nonce: web3.utils.toHex(txCount),
@@ -103,59 +81,82 @@ function sendSignedTransaction(account,privateKey,data){
         tx.sign(new Buffer.from(privateKey,'hex'));
 
         web3.eth.sendSignedTransaction("0x" + tx.serialize().toString("hex"))
-        .then(out=>{
-            console.log("finish " + out);
-            resolve('success');
+        .once("transactionHash",out=>{
+            resolve(out);
         })
         .catch(err =>{
             reject(err);
         })
     });
-    
 }
-
-
+//check if the previous transaction was successful
+//and then send the next transaction
+async function checkTransaction(_hash,_account,_privateKey,_data){
+    return new Promise(async(resolve) =>{
+        if(_hash === undefined || !_hash.includes("0x")){ //check if _hash is acceptable
+            const h = await sendSignedTransaction(_account,_privateKey,_data);
+            resolve(h);
+        }else{
+            web3.eth.getTransactionReceipt(_hash , async(err,res)=>{
+                if(err) throw err;
+                if(res != null){
+                    const h = await sendSignedTransaction(_account,_privateKey,_data);
+                    resolve(h);
+                }else{
+                    console.log("PREVIOUS TRANSACTION NOT FOUND");
+                    resolve("err");
+                }
+            })
+        }
+    });
+}
+//on sign-in it creates a wallet for user
 async function createWallet(){
     try{
         let account;
         account = web3.eth.accounts.create(web3.utils.randomHex(32));
-        console.log("privateKey: " + account.privateKey);
-        console.log("address: " + account.address);
-        sendETH(account.address);   
+
+        sendETH(account.address);//send eth to new address
         return(account.address.toString());
     }catch{
         return({"address" : "ERROR","key" : "error"});
     }
 }
-
+//get dollars and tokens balance from contract with calls
 async function getInfo(_account){
     let _contract = await getContract();
-    console.log("search for => " + _account.toString());
+
     let dollars = await _contract.methods.dollars(_account).call();
     let tokens = await _contract.methods.getTokensBalance(_account).call();
-    console.log("find =>" + dollars.toString() + " " + tokens.toString());
+
     return({
         "dollars": Number(dollars),
         "tokens" : Number(tokens)
     });
 }
-async function addDollars(_dollars,_account,_key){
-    let _contract = await getContract();
-    console.log("search => " + _dollars);
-    const m = _contract.methods.depositDollars(_account,_dollars);
-    const result = await sendSignedTransaction(_account,_key,m);
-    return(result);
-}
+//add dollars to dollar balance 
+async function addDollars(_hash,_dollars,_account,_key){
+    return new Promise(async(resolve) =>{
+        let _contract = await getContract();
 
+        const d = _contract.methods.depositDollars(_account,_dollars);//data
+
+        checkTransaction(_hash,_account,_key,d).then(res =>{
+            resolve(res);
+        });
+    });
+}
+//get all the other informations like offers
 async function getAll(){
     let _contract = await getContract();
     let l = [];
-    const count = await _contract.methods.offersIndex().call()
+
+    const count = await _contract.methods.offersIndex().call();
+    //get list of offers
     for (let i = 0; i <= count-1; i++) {
-        const offer = await _contract.methods.offers(i).call()
-        console.log("giro n° " + i.toString() + "=>" + JSON.stringify(offer));
+        const offer = await _contract.methods.offers(i).call();
+
         if(offer["purchased"] === false){
-            console.log("id=>"+web3.utils.hexToNumber(offer["id"]["_hex"]));
             let newOffer = {"id":web3.utils.hexToNumber(offer["id"]["_hex"]),
                             "owner":offer["owner"],
                             "purchased":offer["purchased"],
@@ -165,35 +166,45 @@ async function getAll(){
             l.push(newOffer);
         }
     }
-    console.log(JSON.stringify(l));
     return(l);
 }
+//it sells a offer
+async function sell(_hash,_tokens,_price,_account,_key){
+    return new Promise(async(resolve) =>{
+        let _contract = await getContract();
 
-async function sell(_tokens,_price,_account,_key){
-    let _contract = await getContract();
-    const m = _contract.methods.sell(_tokens,_price);
-    return(sendSignedTransaction(_account,_key,m).then());
+        const d = _contract.methods.sell(_tokens,_price);
+        
+        checkTransaction(_hash,_account,_key,d).then(res =>{
+            resolve(res);
+        });
+    });
 }
+//it buys a offer
+async function buy(_hash,_id, _account,_key){
+    return new Promise(async(resolve) =>{
+        let _contract = await getContract();
 
-async function buy(_id, _account,_key){
-    let _contract = await getContract();
-    const m = _contract.methods.buy(_id);
-    return(sendSignedTransaction(_account,_key,m).then());
+        const d = _contract.methods.buy(_id);
+
+        checkTransaction(_hash,_account,_key,d).then(res =>{
+            resolve(res);
+        });
+    });
 }
-
+//initialize contract
 const getContract = async() =>{
     if (contract === null) {
         const abi = token.abi;
         const networkId = await web3.eth.net.getId();
         id = networkId;
-        console.log(id);
+
         const networkData = token.networks[networkId];
-        //console.log(networkData.address);
         contractAddress = networkData.address;
+
         let c = new web3.eth.Contract(abi, networkData.address);
         contract = c.clone();
         contract.options.address = networkData.address;
-        console.log("Contract Initiated successfully!");
     }
     return contract;
 }
