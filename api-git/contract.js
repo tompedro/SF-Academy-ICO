@@ -1,10 +1,10 @@
 //import packages
 const Web3 = require('web3');
-const token = require('../src/abis/TokenMarketplace');
+const token = require('./src/abis/TokenMarketplace');
 const Tx = require('ethereumjs-tx').Transaction;
 let url = "https://ropsten.infura.io/v3/154a9cc2ac1f44ae88737a14e8b84a2c";
 //define global variables
-let principalAccount = "0x48a49eC7C463A3F747D325D58cDFb08f762Cf350";
+let principalAccount = "0x48a49eC7C463A3F747D325D58cDFb08f762Cf350";//account where others take ethers
 let privateKeyAccount = "3BFEBD120FD629F8E14FF1088D2D9E9CD97AB2B83BEE6277CB4E5E395D270E97";
 let web3;//web3 instance
 let contract = null;//contract instance
@@ -29,6 +29,7 @@ async function Initialize(){
 async function sendETH(_to){
     try{
         web3.eth.getBalance(_to).then(async(res) => {
+            console.log(res);
             if(Number(res) / 1000000000000000000 < 1){ //check if have less than 1 eth
                 let gasPrice = 20000000000;
                 let gasLimit = 21000;         
@@ -117,7 +118,8 @@ async function createWallet(){
         account = web3.eth.accounts.create(web3.utils.randomHex(32));
 
         sendETH(account.address);//send eth to new address
-        return(account.address.toString());
+
+        return({"address":account.address,"key":account.privateKey});
     }catch{
         return({"address" : "ERROR","key" : "error"});
     }
