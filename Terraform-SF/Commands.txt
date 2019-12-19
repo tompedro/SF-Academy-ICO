@@ -1,0 +1,18 @@
+DOCKER - MYSQL provato sulla porta 3306
+foglio fino a exit
+
+REACT non provato sulla porta 80
+sudo yum install git
+curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -
+sudo yum install nodejs
+git clone https://github.com/tompedro/SF-Academy-ICO.git
+cd SF-Academy-ICO/
+sudo npm install
+sudo pm2 start npm --name "react" -- start
+
+API non provato sulla porta 9000
+cd api-git
+sudo npm install
+sudo pm2 start npm --name "api" --start
+
+incerto sul contatto tra react ed api
