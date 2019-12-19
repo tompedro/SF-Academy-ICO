@@ -169,24 +169,30 @@ class App extends Component{
               <div style = {{paddingLeft : "400px",paddingTop : "20px"}}className = "row" id = "init">
                 {
                   this.state.signin ?
-                  <form onSubmit={(event) => {
-                    event.preventDefault()
-                    this.signIn()
-                    }}>
-                      <label for="uname"><b>Username</b></label>
-                      <input style = {{width : "170%"}}className = "form-control" type="text" placeholder="Enter Username" ref="uname"/>
+                  <div>
+                    <form onSubmit={(event) => {
+                      event.preventDefault()
+                      this.signIn()
+                      }}>
+                        <label for="uname"><b>Username</b></label>
+                        <input style = {{width : "133%"}}className = "form-control" type="text" placeholder="Enter Username" ref="uname"/>
 
-                      <label for="surname"><b>Surname</b></label>
-                      <input style = {{width : "170%"}} className= "form-control" type="text" placeholder="Enter Surname" ref="surname"/>
+                        <label for="surname"><b>Surname</b></label>
+                        <input style = {{width : "133%"}} className= "form-control" type="text" placeholder="Enter Surname" ref="surname"/>
 
-                      <label for="mail"><b>Mail</b></label>
-                      <input style = {{width : "170%"}}className = "form-control" type="text" placeholder="Enter Mail" ref="mail"/>
+                        <label for="mail"><b>Mail</b></label>
+                        <input style = {{width : "133%"}}className = "form-control" type="text" placeholder="Enter Mail" ref="mail"/>
 
-                      <label for="psw"><b>Password</b></label>
-                      <input style = {{width : "170%"}}className = "form-control" type="password" placeholder="Enter Password" ref="psw"/>
+                        <label for="psw"><b>Password</b></label>
+                        <input style = {{width : "133%"}}className = "form-control" type="password" placeholder="Enter Password" ref="psw"/>
 
-                      <button type="submit" className="btn btn-primary" >Sign In</button>
-                  </form>
+                        <button type="submit" className="btn btn-primary" >Sign In</button>
+
+                    </form>
+                    <h6></h6>
+                    <h6>REMEMBER, WAIT A MINUTE</h6>
+                    <h6>AFTER CREATING YOUR ACCOUNT!</h6>
+                  </div>
                   :
                   <form onSubmit={(event) => {
                     event.preventDefault()

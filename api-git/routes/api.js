@@ -7,7 +7,7 @@ let crypto = require('crypto');
 
 //initialize connection with mysql database
 let con = mysql.createConnection({
-    host:"172.17.0.1",
+    host:"localhost",
     user:"root",
     password:"password"
 });
@@ -31,7 +31,7 @@ con.connect(function(err) {
         //initialize new connection
 
         con =  mysql.createConnection({
-            host:"172.17.0.1",
+            host:"localhost",
             user:"root",
             password:"password",
             database : "db"
@@ -71,6 +71,7 @@ router.post("/sign-in",function(req,res,next){
         let pswHashed = crypto.createHmac('sha256', "key").update(req.body["password"]).digest("hex");
         //create command
         let str = "'" + req.body["name"] + "','" + req.body["surname"] + "','" +req.body["mail"].replace("@","-") + "','" +pswHashed+"','"+result["address"] + "','"+result["key"] + "'";
+        console.log(result['key']);
         let sql = "INSERT INTO accounts(name,surname,mail,password,address,privatekey) VALUES("+str+")";
         //send command
         con.query(sql,(err) => {
@@ -101,7 +102,8 @@ router.post("/login",function(req,res,next){
             return;
         }
         //send address and privateKey
-        res.send(result[0].address + " " + result[0].privatekey);
+        console.log(result[0].privatekey.substring(2,result[0].privatekey.length));
+        res.send(result[0].address + " " + result[0].privatekey.substring(2,result[0].privatekey.length));
     });
 });
 //get account info like dollars or token balance
