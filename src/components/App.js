@@ -9,10 +9,12 @@ import Main from './Main';
 class App extends Component{
   constructor(props) {
     super(props);
-    //set initial variables to state
+    //set initial variables
+    let url = window.location.href.toString().replace("/","").split(":")[1]
     this.state = { address:"",privateKey:"",hash :"", dollars :0, tokens:0 ,
                   offers:[],
-                  init : true, signin : true,loading:false}; // init is the variable that define the state of the page
+                  init : true, signin : true,loading:false,
+                  url : url}; // init is the variable that define the state of the page
     //bind all functions
     this.signIn = this.signIn.bind(this)
     this.getInfo = this.getInfo.bind(this)
@@ -26,13 +28,13 @@ class App extends Component{
 
   signIn() {
     if(this.state.address === ""){ //check if not have an address yet
-      fetch("http://localhost:9000/api/sign-in",{
+      fetch("http://"+this.state.url+":9000/api/sign-in",{
         method: 'post',
         headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
         //set all body varibles to make a json
-        body : "name=" + this.refs.uname.value + 
+        body : "name=" + this.refs.uname.value +
                "&surname=" + this.refs.surname.value +
-               "&mail=" + this.refs.mail.value + 
+               "&mail=" + this.refs.mail.value +
                "&password=" + this.refs.psw.value
       })
       .then(res => res.text())
@@ -42,7 +44,7 @@ class App extends Component{
 
   logIn(){
     if(this.state.address === ""){//check if not have an address yet
-      fetch("http://localhost:9000/api/login",{
+      fetch("http://"+this.state.url+":9000/api/login",{
         method: 'post',
         headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
         body : "name=" + this.refs.logName.value +
@@ -67,7 +69,7 @@ class App extends Component{
   }
   //get info of account
   getInfo() {
-    fetch("http://localhost:9000/api/info",{
+    fetch("http://"+this.state.url+":9000/api/info",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
       body : "address=" + this.state.address.toString()
@@ -81,10 +83,10 @@ class App extends Component{
   addDollars() {
     this.setState({loading:true})
 
-    fetch("http://localhost:9000/api/addDollars",{
+    fetch("http://"+this.state.url+":9000/api/addDollars",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
-      body : "hash="+ this.state.hash+  "&dollars=" + this.refs.dollars.value + "&address=" + this.state.address.toString() + "&key=" + this.state.privateKey.toString()
+      body : "hash="+ this.state.hash+  "&dollars=" + this.refs.dollars.value + "&address="+ this.state.address.toString() + "&key=" + this.state.privateKey.toString()
     })
     .then(res => res.text())
     .then((res) =>{
@@ -106,7 +108,7 @@ class App extends Component{
   }
   //get all other informations
   getAll(){
-    fetch("http://localhost:9000/api/getAll",{
+    fetch("http://"+this.state.url+":9000/api/getAll",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'}
     })
@@ -124,7 +126,7 @@ class App extends Component{
   sell(tokens,price){
     this.setState({loading:true})
 
-    fetch("http://localhost:9000/api/sell",{
+    fetch("http://"+this.state.url+":9000/api/sell",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
       body : "tokens=" + tokens.toString() + "&price=" + price.toString() + "&address=" + this.state.address.toString() + "&key=" + this.state.privateKey.toString()
@@ -137,7 +139,7 @@ class App extends Component{
   buy(id){
     this.setState({loading:true})
 
-    fetch("http://localhost:9000/api/buy",{
+    fetch("http://"+this.state.url+":9000/api/buy",{
       method: 'post',
       headers : {'Content-Type' : 'application/x-www-form-urlencoded'},
       body : "id=" + id.toString() + "&address=" + this.state.address.toString() + "&key=" + this.state.privateKey.toString()
