@@ -97,13 +97,16 @@ router.post("/login",function(req,res,next){
             return;
         }
         //check if there are element in database like data given
-        if(result[0] === undefined){ 
+        if(result[0] === undefined){
             res.send("Nome utente o Password non corretti!");
             return;
         }
         //send address and privateKey
-        console.log(result[0].privatekey.substring(2,result[0].privatekey.length));
-        res.send(result[0].address + " " + result[0].privatekey.substring(2,result[0].privatekey.length));
+        if(result[0].privateKey.includes("0x")){
+            console.log(result[0].privatekey.substring(2,result[0].privatekey.length));
+            res.send(result[0].address + " " + result[0].privatekey.substring(2,result[0].privatekey.length));
+        }else{
+            res.send(result[0].address + " " + result[0].privatekey);
     });
 });
 //get account info like dollars or token balance
