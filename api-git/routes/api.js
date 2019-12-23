@@ -102,11 +102,12 @@ router.post("/login",function(req,res,next){
             return;
         }
         //send address and privateKey
-        if(result[0].privateKey.includes("0x")){
+        if(result[0].privatekey.includes("0x")){
             console.log(result[0].privatekey.substring(2,result[0].privatekey.length));
             res.send(result[0].address + " " + result[0].privatekey.substring(2,result[0].privatekey.length));
         }else{
             res.send(result[0].address + " " + result[0].privatekey);
+        }
     });
 });
 //get account info like dollars or token balance
